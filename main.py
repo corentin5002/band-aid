@@ -26,8 +26,6 @@ dt = 0
 # region Boids initialization
 Boids, quadsField = ut.spawnBoid(2, 10, 63)
 
-
-
 # quads.visualize(quadsField)
 # endregion Boids initialization
 
