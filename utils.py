@@ -1,12 +1,31 @@
 import numpy as np
 import variables as var
 import quads as qd
-from boid import Boid
+from boid import Boid, Platelet, Obstacle
 import utils as ut
 
 # region Spawn boid
-def spawnBoid(numberOfBoidsPerGroup=10, numberOfGroups=1, seed=42):
-    # np.random.seed(seed)
+def spawnObstacle(numberOfObstacles=10, seed=var.RANDOM_SEED):
+    np.random.seed(seed)
+
+    Obstacles = []
+    quadsFieldObstacles = qd.QuadTree((0, 0), var.WIDTH_FIELD, var.HEIGHT_FIELD)
+    for i in range(numberOfObstacles):
+        position = np.round(np.random.rand(2) * np.random.randint(0, 802, 2)).astype(int)
+
+        Obstacles.append(Obstacle(
+            position,
+            np.zeros(2),
+            np.zeros(2),
+            name=str(i),
+            type='obstacle'
+        ))
+        ut.insertQuadTree(Obstacles[i].position, quadsFieldObstacles)
+
+    return Obstacles, quadsFieldObstacles
+
+def spawnBoid(numberOfBoidsPerGroup=10, numberOfGroups=1, seed=var.RANDOM_SEED):
+    np.random.seed(seed)
 
     Boids = []
     quadsField = qd.QuadTree((0, 0), var.WIDTH_FIELD, var.HEIGHT_FIELD)
@@ -28,7 +47,7 @@ def spawnBoid(numberOfBoidsPerGroup=10, numberOfGroups=1, seed=42):
             direction = [np.random.choice([-1, 1]) for i in range(2)]
             acceleration = np.random.rand(2) * direction
 
-            Boids.append(Boid(
+            Boids.append(Platelet(
                 position,
                 velocity,
                 acceleration,
@@ -69,6 +88,9 @@ def insertQuadTree(position, quadTree):
     normPosition = pygameToQuadtree(position)
     quadTree.insert(normPosition)
 
+def insertObjectsQuadTree(objects, quadTree):
+    for object in objects:
+        insertQuadTree(object.position, quadTree)
 def getNeighbors(position, vision , Boids, quadTree):
     # Convert to quadtree coordinate
     normPosition = pygameToQuadtree(position)
@@ -112,15 +134,14 @@ def updateQuadTree(boids):
 # endregion Change coordinate to quadTree referential
 
 # region draw bot
-def drawBot(pygame, screen, bot, label=False, vision= False, neighborsLines=False, velocity=False):
+def drawBot(pygame, screen, bot, label=False, vision= False, neighborsLines=False, velocity=False, obstacleLines=False):
 
-    color = var.RED
     if len(bot.neighbors) > 0:
         color = var.BLUE
 
     pygame.draw.rect(
         screen,
-        color,
+        bot.color,
         (
             bot.position[0] * var.PIXEL_SIZE - var.BOT_SIZE // 2,  # x
             bot.position[1] * var.PIXEL_SIZE - var.BOT_SIZE // 2,  # y
@@ -148,6 +169,15 @@ def drawBot(pygame, screen, bot, label=False, vision= False, neighborsLines=Fals
 
     if neighborsLines:
         for neighbor in bot.neighbors:
+            pygame.draw.line(
+                screen,
+                var.BLUE_VISION,
+                (bot.position[0] * var.PIXEL_SIZE, bot.position[1] * var.PIXEL_SIZE),
+                (neighbor.position[0] * var.PIXEL_SIZE, neighbor.position[1] * var.PIXEL_SIZE),
+                1
+            )
+    if obstacleLines and bot.type != 'obstacle':
+        for neighbor in bot.obstacles:
             pygame.draw.line(
                 screen,
                 var.BLUE_VISION,

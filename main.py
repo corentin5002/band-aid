@@ -24,7 +24,9 @@ clock = pygame.time.Clock()
 dt = 0
 
 # region Boids initialization
-Boids, quadsField = ut.spawnBoid(2, 10, 63)
+Obstacles, quadsFieldObstacles = ut.spawnObstacle(10, 12)
+Boids, quadsField = ut.spawnBoid(10, 5, 63)
+ut.insertObjectsQuadTree(Obstacles, quadsField)
 
 # quads.visualize(quadsField)
 # endregion Boids initialization
@@ -39,7 +41,9 @@ play = False
 labels = False
 vision = False
 neighborsLines = False
+obstacleLines = True
 velocity = False
+
 FPS = 1
 
 # endregion keys
@@ -57,6 +61,9 @@ while running:
             running = False
 
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+
             if event.key == pygame.K_SPACE:
                 play = not play
             if event.key == pygame.K_l:
@@ -68,6 +75,9 @@ while running:
             if event.key == pygame.K_n:
                 neighborsLines = not neighborsLines
 
+            if event.key == pygame.K_o:
+                obstacleLines = not obstacleLines
+
             if event.key == pygame.K_s:
                 velocity = not velocity
 
@@ -78,6 +88,16 @@ while running:
                 FPS -= 1
                 if FPS < 1:
                     FPS = 1
+
+            if event.key == pygame.K_LEFT:
+                var.MAX_SPEED_PLATELET -= 1
+                if var.MAX_SPEED_PLATELET < 1:
+                    var.MAX_SPEED_PLATELET = 1
+
+            if event.key == pygame.K_RIGHT:
+                var.MAX_SPEED_PLATELET += 1
+                if var.MAX_SPEED_PLATELET > 20:
+                    var.MAX_SPEED_PLATELET = 20
 
 
 
@@ -100,16 +120,18 @@ while running:
                 sep = boid.separate(boid.neighbors, 2)
                 coh = boid.cohesion(boid.neighbors)
                 ali = boid.align(boid.neighbors)
+                obs = boid.separate(boid.obstacles, 2)
 
                 total_force = (
                     sep * var.SEP_WEIGHT
                     + coh * var.COH_WEIGHT
                     + ali * var.ALI_WEIGHT
+                    + obs * var.OBS_AVOIDANCE
                    )
 
                 # Limit speed of the boid
                 boid.velocity += total_force
-                boid.find_obstacle()
+                boid.avoid_walls()
 
                 boid.velocity = np.clip(boid.velocity, -var.MAX_SPEED_PLATELET, var.MAX_SPEED_PLATELET)
 
@@ -122,11 +144,25 @@ while running:
     for boid in Boids:
         if update:
             boid.neighbors = ut.getNeighbors(boid.position, boid.vision, Boids, quadsField)
+            boid.obstacles = ut.getNeighbors(boid.position, boid.vision, Obstacles, quadsFieldObstacles)
+            boid.updateColor()
 
         ut.drawBot(
             pygame,
             screen,
             boid,
+            label=labels,
+            vision=vision,
+            neighborsLines=neighborsLines,
+            obstacleLines=obstacleLines,
+            velocity=velocity
+        )
+
+    for obstacle in Obstacles:
+        ut.drawBot(
+            pygame,
+            screen,
+            obstacle,
             label=labels,
             vision=vision,
             neighborsLines=neighborsLines,

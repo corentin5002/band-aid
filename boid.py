@@ -5,8 +5,7 @@ import uuid
 
 
 class Boid:
-
-    def __init__(self, position, velocity, acceleration, name=''):
+    def __init__(self, position, velocity, acceleration, name='', type='agent'):
         self.id = uuid.uuid4()
         self.name = 'b_' + name
         self.vision = var.BOT_VISION
@@ -16,12 +15,30 @@ class Boid:
         self.velocity = velocity
         self.acceleration = acceleration
         self.neighbors = []
+        # Define the type of boid :
+        # agent : moving boid (define later platelet and messenger)
+        # obstacle : static boid
+        self.type = type
+        self.color = var.WHITE
+
+class Platelet(Boid):
+    def __init__(self, position, velocity, acceleration, name='', type='agent'):
+        super().__init__(position, velocity, acceleration, name, type)
+        self.color = var.RED
+        self.neighbors = []
+        self.obstacles = []
 
     def separate(self, neighbors, desired_separation):
         steer = np.zeros(2)
+
+        separationDistance = var.SEP_MINIMAL
+        if len(neighbors) > 0 and neighbors[0].type != 'agent':
+            separationDistance = var.BOT_VISION
+
         for neighbor in neighbors:
+
             diff = self.position - neighbor.position
-            if 0. < np.linalg.norm(diff) < var.SEP_MINIMAL:
+            if 0. < np.linalg.norm(diff) < separationDistance:
                 steer += diff / np.linalg.norm(diff)
             elif np.linalg.norm(diff) == 0:
                 steer += diff
@@ -48,7 +65,10 @@ class Boid:
             steer -= self.position
         return steer
 
-    def find_obstacle(self):
+    def avoid_obstacles(self, obstacles):
+        pass
+
+    def avoid_walls(self):
         nextPosition = self.position + self.velocity * var.OBS_AVOIDANCE
 
         while not ut.isInField(nextPosition):
@@ -67,6 +87,17 @@ class Boid:
         #     self.velocity[1] *= -1
 
 
-
     def neighbors(self, neighbors):
         self.neighbors = neighbors
+
+    def updateColor(self):
+        if len(self.neighbors) != 0:
+            self.color = var.BLUE
+        else:
+            self.color = var.RED
+
+
+class Obstacle(Boid):
+    def __init__(self, position, velocity, acceleration, name='', type='obstacle'):
+        super().__init__(position, velocity, acceleration, name, type)
+        self.color = var.BLACK
