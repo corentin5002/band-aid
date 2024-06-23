@@ -5,7 +5,7 @@ from boid import Boid, Platelet, Obstacle
 import utils as ut
 
 # region Spawn boid
-def spawnObstacle(numberOfObstacles=10, seed=var.RANDOM_SEED):
+def spawnRandomObstacles(numberOfObstacles=10, seed=var.RANDOM_SEED):
     np.random.seed(seed)
 
     Obstacles = []
@@ -22,9 +22,66 @@ def spawnObstacle(numberOfObstacles=10, seed=var.RANDOM_SEED):
         ))
         ut.insertQuadTree(Obstacles[i].position, quadsFieldObstacles)
 
+
     return Obstacles, quadsFieldObstacles
 
+def spawnObstacles(Obstacles, quadsFieldObstacles):
+
+    # Create walls obstacle to prove that boids can avoid them
+
+    offsetWidth  = var.WIDTH_SCREEN //2 - 16 * var.BOT_SIZE // 2
+    offsetHeight = var.HEIGHT_SCREEN//2 - 16 * var.BOT_SIZE // 2
+    lastObstacles = len(Obstacles)
+    for i in range(0, 16):
+        # Top wall
+        Obstacles.append(Obstacle(
+            np.array([ offsetWidth + i * var.BOT_SIZE, var.HEIGHT_FIELD //6]),
+            np.zeros(2),
+            np.zeros(2),
+            name=str(i),
+            type='obstacle'
+        ))
+        ut.insertQuadTree(Obstacles[lastObstacles].position, quadsFieldObstacles)
+        lastObstacles += 1
+
+        # Bottom wall
+        Obstacles.append(Obstacle(
+            np.array([ offsetWidth + i * var.BOT_SIZE, var.HEIGHT_SCREEN - var.HEIGHT_FIELD //6]),
+            np.zeros(2),
+            np.zeros(2),
+            name=str(i),
+            type='obstacle'
+        ))
+        ut.insertQuadTree(Obstacles[lastObstacles].position, quadsFieldObstacles)
+        lastObstacles += 1
+
+        # Left wall
+        Obstacles.append(Obstacle(
+            np.array([ var.HEIGHT_FIELD //6, offsetHeight + i * var.BOT_SIZE]),
+            np.zeros(2),
+            np.zeros(2),
+            name=str(i),
+            type='obstacle'
+        ))
+        ut.insertQuadTree(Obstacles[lastObstacles].position, quadsFieldObstacles)
+        lastObstacles += 1
+
+        # Right wall
+        Obstacles.append(Obstacle(
+            np.array([ var.HEIGHT_FIELD - var.WIDTH_FIELD //6, offsetHeight + i * var.BOT_SIZE]),
+            np.zeros(2),
+            np.zeros(2),
+            name=str(i),
+            type='obstacle'
+        ))
+        ut.insertQuadTree(Obstacles[lastObstacles].position, quadsFieldObstacles)
+        lastObstacles += 1
+
+
 def spawnBoid(numberOfBoidsPerGroup=10, numberOfGroups=1, seed=var.RANDOM_SEED):
+
+    # Will spawn randomly the platelets boids per groups in the field
+    # (Feel free to change the seed)
     np.random.seed(seed)
 
     Boids = []
@@ -70,7 +127,7 @@ def isInField(position):
 
 # region Change coordinate to quadTree referential
 def pygameToQuadtree(position):
-    # change the origin of the coordinate system (Top left -> Center)
+    # Change the origin of the coordinate system (Top left -> Center)
     normPosition = np.array(position)
     normPosition[0] = normPosition[0] - var.WIDTH_FIELD // 2
     normPosition[1] = - (normPosition[1] - var.HEIGHT_FIELD // 2 )
@@ -78,7 +135,7 @@ def pygameToQuadtree(position):
     return tuple(normPosition)
 
 def quadtreeToPygame(position):
-    # change the origin of the coordinate system (Center -> Top left)
+    # Change the origin of the coordinate system (Center -> Top left)
     normPosition = np.array([position.x, position.y])
     normPosition[0] = normPosition[0] + var.WIDTH_FIELD // 2
     normPosition[1] = - normPosition[1] + var.HEIGHT_FIELD // 2
@@ -86,13 +143,19 @@ def quadtreeToPygame(position):
     return normPosition
 
 def insertQuadTree(position, quadTree):
+    # Insert the element in the specified quadtree
     normPosition = pygameToQuadtree(position)
     quadTree.insert(normPosition)
 
 def insertObjectsQuadTree(objects, quadTree):
+    # Insert a list of elements in the specified quadtree (Boid, Obstacle, Hole, ...)
     for object in objects:
         insertQuadTree(object.position, quadTree)
+
 def getNeighbors(position, vision , Boids, quadTree):
+    # Use the quadtree to get the neighbors quickly (O(log(n))) instead of checking constantly
+    # all the boids with the euclidean distance (O(n))
+
     # Convert to quadtree coordinate
     normPosition = pygameToQuadtree(position)
 
@@ -119,12 +182,8 @@ def getNeighbors(position, vision , Boids, quadTree):
 
     return neighbors
 
-def getPosition(position, quadTree):
-    normPosition = np.array(position)
-    normPosition[0] = normPosition[0] + var.WIDTH_FIELD // 2
-    normPosition[1] = - normPosition[1] + var.HEIGHT_FIELD // 2
-
 def updateQuadTree(boids):
+    # Update the quadtree with the new objects position
     quadsField = qd.QuadTree((0, 0), var.WIDTH_FIELD, var.HEIGHT_FIELD)
 
     for boid in boids:
@@ -136,9 +195,7 @@ def updateQuadTree(boids):
 
 # region Draw Functions
 def drawBot(pygame, screen, bot, label=False, vision= False, neighborsLines=False, velocity=False, obstacleLines=False):
-
-    if len(bot.neighbors) > 0:
-        color = var.BLUE
+    # Draw the objects on the screen (Boid, Obstacle, Hole, ...)
 
     pygame.draw.rect(
         screen,
@@ -177,6 +234,7 @@ def drawBot(pygame, screen, bot, label=False, vision= False, neighborsLines=Fals
                 (neighbor.position[0] * var.PIXEL_SIZE, neighbor.position[1] * var.PIXEL_SIZE),
                 1
             )
+
     if obstacleLines and bot.type != 'obstacle':
         for neighbor in bot.obstacles:
             pygame.draw.line(
@@ -199,8 +257,8 @@ def drawBot(pygame, screen, bot, label=False, vision= False, neighborsLines=Fals
 # endregion draw bot
 
 # region obstacles
-def drawObstacle(pygame, screen, position, size, color):
-
+def drawWallInstance(pygame, screen, position, size, color):
+    # Draw the wall (part of edges of the field)
     pygame.draw.rect(
         screen,
         color,
@@ -217,16 +275,17 @@ def drawObstacle(pygame, screen, position, size, color):
 # endregion obstacles
 
 def drawWalls(pygame, screen, quadField):
+    # Draw the all the 4 walls with each of their instances
     size = 4
     for width in range(var.WIDTH_FIELD):
-        drawObstacle(
+        drawWallInstance(
             pygame,
             screen,
             (width, 0),
             size,
             var.TEST
         )
-        drawObstacle(
+        drawWallInstance(
             pygame,
             screen,
             (width, var.HEIGHT_FIELD - size),
@@ -235,14 +294,14 @@ def drawWalls(pygame, screen, quadField):
         )
 
     for height in range(var.HEIGHT_FIELD):
-        drawObstacle(
+        drawWallInstance(
             pygame,
             screen,
             (0, height),
             size,
             var.TEST
         )
-        drawObstacle(
+        drawWallInstance(
             pygame,
             screen,
             (var.WIDTH_SCREEN - size, height),
@@ -251,7 +310,7 @@ def drawWalls(pygame, screen, quadField):
         )
 
 def drawSpecs(pygame, screen, showSpecs=False):
-
+    # Draw the HUD with the simulations' specs
     font = pygame.font.Font(None, var.FONT_SIZE)
 
     if showSpecs:
@@ -277,16 +336,13 @@ def drawSpecs(pygame, screen, showSpecs=False):
         text = font.render("Press h to show specs",True, (130, 130, 130))
         screen.blit(text, (20, 10))
 
-
-
-def createStringSpecs(key, value):
-    return key + ': ' + str(value)
-
 # endregion Draw Functions
 
 # region Event
 
 def handleEvents(pygame, config, Boids, Obstacles, quadField, quadsFieldObstacles):
+    # Handle the events (keyboard, mouse, ...) to "play" a little bit with the simulation
+
     for event in pygame.event.get():
         # check for closing window
         if event.type == pygame.QUIT:
@@ -298,8 +354,8 @@ def handleEvents(pygame, config, Boids, Obstacles, quadField, quadsFieldObstacle
             if mouseLeft:
                 position = pygame.mouse.get_pos()
                 position = np.array([
-                    position[0] // var.PIXEL_SIZE ,
-                    position[1] // var.PIXEL_SIZE
+                    position[0] // var.PIXEL_SIZE - position[0] % var.BOT_SIZE,
+                    position[1] // var.PIXEL_SIZE - position[1] % var.BOT_SIZE
                 ])
                 Obstacles.append(Obstacle(position, np.zeros(2), np.zeros(2), name=str(len(Obstacles)), type='obstacle'))
                 insertQuadTree(position, quadsFieldObstacles)

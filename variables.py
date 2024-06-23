@@ -26,7 +26,8 @@ SEP_MINIMAL = BOT_VISION * .9
 COH_WEIGHT = 0.3
 ALI_WEIGHT = 0.5
 OBS_AVOIDANCE = 2
-# always add 1 to the number of neighbors because the quadtree return the point itself if it exist within the quadtree
+
+# Always add 1 to the number of neighbors because the quadtree return the point itself if it exist within the quadtree
 NBR_NEIGHBORS = 7
 
 MAX_SPEED_PLATELET = 4

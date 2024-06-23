@@ -94,3 +94,5 @@ class Obstacle(Boid):
     def __init__(self, position, velocity, acceleration, name='', type='obstacle'):
         super().__init__(position, velocity, acceleration, name, type)
         self.color = var.BLACK
+
+# TODO : Messenger and Hole Class

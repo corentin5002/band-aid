@@ -1,34 +1,31 @@
 # libraries
 import pygame
-import quads
 import numpy as np
 
 # Functions
 import variables as var
 import utils as ut
 
-# region Quadtree
-import quads as qd
-
-quadsField = qd.QuadTree((0, 0), var.WIDTH_FIELD, var.HEIGHT_FIELD)
-
-# force pygame to open on the right screen
-desired_display = 0
+# Force pygame to open on the right screen
+# desired_display = 0
 
 # initialize pygame and create window
 pygame.init()
 pygame.mixer.init()
-screen = pygame.display.set_mode((var.WIDTH_SCREEN, var.HEIGHT_SCREEN), display=desired_display)
+screen = pygame.display.set_mode(
+    (var.WIDTH_SCREEN, var.HEIGHT_SCREEN),
+    # display=desired_display
+)
 pygame.display.set_caption("Flocking Simulation")
 clock = pygame.time.Clock()
 dt = 0
 
 # region Objects initialization
-Obstacles, quadsFieldObstacles = ut.spawnObstacle(0, 63)
+Obstacles, quadsFieldObstacles = ut.spawnRandomObstacles(0, 63)
+ut.spawnObstacles(Obstacles, quadsFieldObstacles)
 Boids, quadsField = ut.spawnBoid(10, 8, 63)
 ut.insertObjectsQuadTree(Obstacles, quadsField)
 
-# quads.visualize(quadsField)
 # endregion Objects initialization
 
 # endregion
@@ -41,23 +38,19 @@ Config = {
     "labels" : False,
     "vision" : False,
     "neighborsLines" : False,
-    "obstacleLines" : True,
+    "obstacleLines" : False,
     "velocity" : False,
     "showSpecs" : False,
     "FPS" : 1
 }
 
-# region keys
-
-# endregion keys
-
-
 while Config["running"]:
 
-    # keep loop running at the right speed
+    # Keep loop running at the right speed
     clock.tick(var.FPS)
     dt += 1
-    # region handling events
+
+    # Handling events function
     ut.handleEvents(pygame, Config, Boids, Obstacles, quadsField, quadsFieldObstacles)
 
     screen.fill(var.WHITE)
