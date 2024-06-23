@@ -245,4 +245,35 @@ def drawWalls(pygame, screen, quadField):
             size,
             var.TEST
         )
+
+def drawSpecs(pygame, screen, showSpecs=False):
+
+    font = pygame.font.Font(None, var.FONT_SIZE)
+
+    if showSpecs:
+        specs = [ "Bot Speed : " + str(var.MAX_SPEED_PLATELET) + " range [0, 200]",
+                  "",
+            "Commands :",
+            "- Space : Pause/Play",
+            "- l : Show/Hide labels (laggy)",
+            "- v : Show/Hide vision range",
+            "- n : Show/Hide neighbors links (coolest view)",
+            "- o : Show/Hide obstacle links",
+            "- s : Show/Hide velocity vector",
+            "- UP/DOWN : Decrease/Increase Simulation speed",
+            "- LEFT/RIGHT : Decrease/Increase Bot speed",
+            "- ESC : Quit"
+        ]
+        for spec in specs:
+            text = font.render(spec,True, (0, 0, 0))
+            screen.blit(text, (20, 10 + specs.index(spec) * var.FONT_SIZE))
+
+    else:
+        text = font.render("Press h to show specs",True, (130, 130, 130))
+        screen.blit(text, (20, 10))
+
+
+def createStringSpecs(key, value):
+    return key + ': ' + str(value)
+
 # endregion obstacles

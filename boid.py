@@ -79,13 +79,6 @@ class Platelet(Boid):
             self.velocity  = np.dot(rotationMatrix, self.velocity)
             nextPosition = self.position + self.velocity * 3
 
-        # Old version "bounce" against the wall
-        # if nextPosition[0] < 0 or nextPosition[0] > var.WIDTH_FIELD:
-        #     self.velocity[0] *= -1
-        #
-        # elif nextPosition[1] < 0 or nextPosition[1] > var.HEIGHT_FIELD :
-        #     self.velocity[1] *= -1
-
 
     def neighbors(self, neighbors):
         self.neighbors = neighbors

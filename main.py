@@ -24,8 +24,8 @@ clock = pygame.time.Clock()
 dt = 0
 
 # region Boids initialization
-Obstacles, quadsFieldObstacles = ut.spawnObstacle(10, 12)
-Boids, quadsField = ut.spawnBoid(10, 5, 63)
+Obstacles, quadsFieldObstacles = ut.spawnObstacle(0, 63)
+Boids, quadsField = ut.spawnBoid(10, 8, 63)
 ut.insertObjectsQuadTree(Obstacles, quadsField)
 
 # quads.visualize(quadsField)
@@ -43,6 +43,7 @@ vision = False
 neighborsLines = False
 obstacleLines = True
 velocity = False
+showSpecs = False
 
 FPS = 1
 
@@ -91,23 +92,22 @@ while running:
 
             if event.key == pygame.K_LEFT:
                 var.MAX_SPEED_PLATELET -= 1
-                if var.MAX_SPEED_PLATELET < 1:
-                    var.MAX_SPEED_PLATELET = 1
+                if var.MAX_SPEED_PLATELET < 0:
+                    var.MAX_SPEED_PLATELET = 0
 
             if event.key == pygame.K_RIGHT:
                 var.MAX_SPEED_PLATELET += 1
-                if var.MAX_SPEED_PLATELET > 20:
-                    var.MAX_SPEED_PLATELET = 20
+                if var.MAX_SPEED_PLATELET > 200:
+                    var.MAX_SPEED_PLATELET = 200
 
-
-
+            if event.key == pygame.K_h:
+                showSpecs = not showSpecs
 
     # endregion Process input (events)
 
     screen.fill(var.WHITE)
     ut.drawWalls(pygame, screen, quadsField)
 
-        # quads.visualize(quadsField)
     # region Update
 
     update = False
@@ -115,7 +115,6 @@ while running:
         play = True
         update = True
 
-        print(f'===============ROUND {dt}==============')
         for boid in Boids :
                 sep = boid.separate(boid.neighbors, 2)
                 coh = boid.cohesion(boid.neighbors)
@@ -141,6 +140,9 @@ while running:
         quadsField = None
         quadsField = ut.updateQuadTree(Boids)
 
+    # endregion Update
+
+    # region Rendering
     for boid in Boids:
         if update:
             boid.neighbors = ut.getNeighbors(boid.position, boid.vision, Boids, quadsField)
@@ -169,7 +171,8 @@ while running:
             velocity=velocity
         )
 
-    # endregion Update
+    ut.drawSpecs(pygame, screen, showSpecs=showSpecs)
+    # endregion rendering
 
     # region Draw / render
     pygame.display.flip()
