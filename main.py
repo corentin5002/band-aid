@@ -23,87 +23,42 @@ pygame.display.set_caption("Flocking Simulation")
 clock = pygame.time.Clock()
 dt = 0
 
-# region Boids initialization
+# region Objects initialization
 Obstacles, quadsFieldObstacles = ut.spawnObstacle(0, 63)
 Boids, quadsField = ut.spawnBoid(10, 8, 63)
 ut.insertObjectsQuadTree(Obstacles, quadsField)
 
 # quads.visualize(quadsField)
-# endregion Boids initialization
+# endregion Objects initialization
 
 # endregion
 
 # region Game loop
-running = True
+
+Config = {
+    "running" : True,
+    "play" : False,
+    "labels" : False,
+    "vision" : False,
+    "neighborsLines" : False,
+    "obstacleLines" : True,
+    "velocity" : False,
+    "showSpecs" : False,
+    "FPS" : 1
+}
 
 # region keys
-play = False
-labels = False
-vision = False
-neighborsLines = False
-obstacleLines = True
-velocity = False
-showSpecs = False
-
-FPS = 1
 
 # endregion keys
 
 
-while running:
+while Config["running"]:
 
     # keep loop running at the right speed
     clock.tick(var.FPS)
     dt += 1
-    # region Process input (events)
-    for event in pygame.event.get():
-        # check for closing window
-        if event.type == pygame.QUIT:
-            running = False
-
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                running = False
-
-            if event.key == pygame.K_SPACE:
-                play = not play
-            if event.key == pygame.K_l:
-                labels = not labels
-
-            if event.key == pygame.K_v:
-                vision = not vision
-
-            if event.key == pygame.K_n:
-                neighborsLines = not neighborsLines
-
-            if event.key == pygame.K_o:
-                obstacleLines = not obstacleLines
-
-            if event.key == pygame.K_s:
-                velocity = not velocity
-
-            if event.key == pygame.K_UP:
-                FPS += 1
-
-            if event.key == pygame.K_DOWN:
-                FPS -= 1
-                if FPS < 1:
-                    FPS = 1
-
-            if event.key == pygame.K_LEFT:
-                var.MAX_SPEED_PLATELET -= 1
-                if var.MAX_SPEED_PLATELET < 0:
-                    var.MAX_SPEED_PLATELET = 0
-
-            if event.key == pygame.K_RIGHT:
-                var.MAX_SPEED_PLATELET += 1
-                if var.MAX_SPEED_PLATELET > 200:
-                    var.MAX_SPEED_PLATELET = 200
-
-            if event.key == pygame.K_h:
-                showSpecs = not showSpecs
-
-    # endregion Process input (events)
+    # region handling events
+    ut.handleEvents(pygame, Config, Boids, Obstacles, quadsField, quadsFieldObstacles)
 
     screen.fill(var.WHITE)
     ut.drawWalls(pygame, screen, quadsField)
@@ -111,7 +66,7 @@ while running:
     # region Update
 
     update = False
-    if play and dt % FPS == 0:
+    if Config['play'] and dt % Config["FPS"] == 0:
         play = True
         update = True
 
@@ -153,11 +108,11 @@ while running:
             pygame,
             screen,
             boid,
-            label=labels,
-            vision=vision,
-            neighborsLines=neighborsLines,
-            obstacleLines=obstacleLines,
-            velocity=velocity
+            label=Config['labels'],
+            vision=Config['vision'],
+            neighborsLines=Config['neighborsLines'],
+            obstacleLines=Config['obstacleLines'],
+            velocity=Config['velocity']
         )
 
     for obstacle in Obstacles:
@@ -165,13 +120,13 @@ while running:
             pygame,
             screen,
             obstacle,
-            label=labels,
-            vision=vision,
-            neighborsLines=neighborsLines,
-            velocity=velocity
+            label=Config['labels'],
+            vision=Config['vision'],
+            neighborsLines=Config['neighborsLines'],
+            velocity=Config['velocity']
         )
 
-    ut.drawSpecs(pygame, screen, showSpecs=showSpecs)
+    ut.drawSpecs(pygame, screen, showSpecs=Config['showSpecs'])
     # endregion rendering
 
     # region Draw / render

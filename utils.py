@@ -38,6 +38,7 @@ def spawnBoid(numberOfBoidsPerGroup=10, numberOfGroups=1, seed=var.RANDOM_SEED):
 
             #Spread the boid around the group position
             position = (groupPosition + (np.random.rand(2) * 90)).astype(int)
+
             while not isInField(position):
                 position = (groupPosition + (np.random.rand(2) * 90)).astype(int)
 
@@ -133,7 +134,7 @@ def updateQuadTree(boids):
 
 # endregion Change coordinate to quadTree referential
 
-# region draw bot
+# region Draw Functions
 def drawBot(pygame, screen, bot, label=False, vision= False, neighborsLines=False, velocity=False, obstacleLines=False):
 
     if len(bot.neighbors) > 0:
@@ -212,6 +213,9 @@ def drawObstacle(pygame, screen, position, size, color):
         0
     )
 
+
+# endregion obstacles
+
 def drawWalls(pygame, screen, quadField):
     size = 4
     for width in range(var.WIDTH_FIELD):
@@ -253,27 +257,94 @@ def drawSpecs(pygame, screen, showSpecs=False):
     if showSpecs:
         specs = [ "Bot Speed : " + str(var.MAX_SPEED_PLATELET) + " range [0, 200]",
                   "",
-            "Commands :",
-            "- Space : Pause/Play",
-            "- l : Show/Hide labels (laggy)",
-            "- v : Show/Hide vision range",
-            "- n : Show/Hide neighbors links (coolest view)",
-            "- o : Show/Hide obstacle links",
-            "- s : Show/Hide velocity vector",
-            "- UP/DOWN : Decrease/Increase Simulation speed",
-            "- LEFT/RIGHT : Decrease/Increase Bot speed",
-            "- ESC : Quit"
-        ]
+                  "Commands :",
+                  "- Space : Pause/Play",
+                  "- l : Show/Hide labels (laggy)",
+                  "- v : Show/Hide vision range",
+                  "- n : Show/Hide neighbors links (coolest view)",
+                  "- o : Show/Hide obstacle links",
+                  "- s : Show/Hide velocity vector",
+                  "- UP/DOWN : Decrease/Increase Simulation speed",
+                  "- LEFT/RIGHT : Decrease/Increase Bot speed",
+                  "- ESC : Quit"
+                  ]
         for spec in specs:
             text = font.render(spec,True, (0, 0, 0))
             screen.blit(text, (20, 10 + specs.index(spec) * var.FONT_SIZE))
+
 
     else:
         text = font.render("Press h to show specs",True, (130, 130, 130))
         screen.blit(text, (20, 10))
 
 
+
 def createStringSpecs(key, value):
     return key + ': ' + str(value)
 
-# endregion obstacles
+# endregion Draw Functions
+
+# region Event
+
+def handleEvents(pygame, config, Boids, Obstacles, quadField, quadsFieldObstacles):
+    for event in pygame.event.get():
+        # check for closing window
+        if event.type == pygame.QUIT:
+            config['running'] = False
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mouseLeft, mouseCenter, mouseRight = pygame.mouse.get_pressed()
+
+            if mouseLeft:
+                position = pygame.mouse.get_pos()
+                position = np.array([
+                    position[0] // var.PIXEL_SIZE ,
+                    position[1] // var.PIXEL_SIZE
+                ])
+                Obstacles.append(Obstacle(position, np.zeros(2), np.zeros(2), name=str(len(Obstacles)), type='obstacle'))
+                insertQuadTree(position, quadsFieldObstacles)
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                config['running'] = False
+
+            if event.key == pygame.K_SPACE:
+                config['play'] = not config['play']
+
+            if event.key == pygame.K_l:
+                config['labels'] = not ['labels']
+
+            if event.key == pygame.K_v:
+                config['vision'] = not config['vision']
+
+            if event.key == pygame.K_n:
+                config['neighborsLines'] = not config['neighborsLines']
+
+            if event.key == pygame.K_o:
+                config['obstacleLines'] = not config['obstacleLines']
+
+            if event.key == pygame.K_s:
+                config['velocity'] = not config['velocity']
+
+            if event.key == pygame.K_UP:
+                config['FPS'] += 1
+
+            if event.key == pygame.K_DOWN:
+                config['FPS'] -= 1
+                if config['FPS'] < 1:
+                    config['FPS'] = 1
+
+            if event.key == pygame.K_LEFT:
+                var.MAX_SPEED_PLATELET -= 1
+                if var.MAX_SPEED_PLATELET < 0:
+                    var.MAX_SPEED_PLATELET = 0
+
+            if event.key == pygame.K_RIGHT:
+                var.MAX_SPEED_PLATELET += 1
+                if var.MAX_SPEED_PLATELET > 200:
+                    var.MAX_SPEED_PLATELET = 200
+
+            if event.key == pygame.K_h:
+                config['showSpecs'] = not config['showSpecs']
+
+# endregion
